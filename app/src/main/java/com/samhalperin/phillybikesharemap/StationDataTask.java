@@ -35,14 +35,21 @@ public class StationDataTask extends AsyncTask<String, Void, Station[]> {
 //            }
             return debuggingStations();
         } else {
+            StationPersistence stationPersistence = StationPersistence.getInstance(mHandler);
             try {
                 String jsonResponse = doGetRequest(params[0]);
                 Station[] stations = StationJsonResponseParser.jsonToStations(jsonResponse);
+                stationPersistence.saveStations(jsonResponse);
                 return stations;
             } catch (IOException e) {
                 Log.w("pbsm", "Problem fetching station data", e);
             }
             Log.e("pbsm", "Uh oh, fell through to nodata.");
+            Station[] previousResults = stationPersistence.getPreviousStations();
+            if (previousResults != null) {
+                Log.i("pbsm", "Using previous station list");
+                return previousResults;
+            }
             return new Station[0];
         }
     }
