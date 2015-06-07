@@ -2,6 +2,7 @@ package com.samhalperin.phillybikesharemap;
 
 import android.os.AsyncTask;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.google.android.gms.maps.model.LatLng;
 
@@ -35,21 +36,15 @@ public class StationDataTask extends AsyncTask<String, Void, Station[]> {
 //            }
             return debuggingStations();
         } else {
-            StationPersistence stationPersistence = StationPersistence.getInstance(mHandler);
             try {
                 String jsonResponse = doGetRequest(params[0]);
                 Station[] stations = StationJsonResponseParser.jsonToStations(jsonResponse);
-                stationPersistence.saveStations(jsonResponse);
+                StationPersistence.getInstance(mHandler).saveStations(jsonResponse);
                 return stations;
             } catch (IOException e) {
                 Log.w("pbsm", "Problem fetching station data", e);
             }
             Log.e("pbsm", "Uh oh, fell through to nodata.");
-            Station[] previousResults = stationPersistence.getPreviousStations();
-            if (previousResults != null) {
-                Log.i("pbsm", "Using previous station list");
-                return previousResults;
-            }
             return new Station[0];
         }
     }
@@ -123,6 +118,15 @@ public class StationDataTask extends AsyncTask<String, Void, Station[]> {
 
     @Override
     protected void onPostExecute(Station[] stations) {
+        if (stations.length == 0) {
+            Station[] previousResults = StationPersistence.getInstance(mHandler).getPreviousStations();
+            if (previousResults != null) {
+                Log.i("pbsm", "Using previous station list");
+                Toast.makeText(mHandler, "Refresh failed; showing previous stations", Toast.LENGTH_LONG).show();
+                stations = previousResults;
+            }
+        }
+
         mHandler.loadStationData(stations);
     }
 
