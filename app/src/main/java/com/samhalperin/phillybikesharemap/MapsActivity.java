@@ -41,7 +41,7 @@ public class MapsActivity extends ActionBarActivity implements StationDataTask.S
 
 
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_maps);
+        setContentView(R.layout.main_maps);
         setUpMapIfNeeded();
 
     }

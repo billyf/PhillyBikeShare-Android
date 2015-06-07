@@ -2,6 +2,7 @@ package com.samhalperin.phillybikesharemap;
 
 import android.os.AsyncTask;
 import android.util.Log;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.maps.model.LatLng;
@@ -11,6 +12,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 /**
  * Created by sqh on 5/8/15.
@@ -117,17 +120,37 @@ public class StationDataTask extends AsyncTask<String, Void, Station[]> {
     }
 
     @Override
+    protected void onPreExecute() {
+        setStatusText("Loading station data...");
+    }
+
+    @Override
     protected void onPostExecute(Station[] stations) {
+        String lastUpdated = getLastUpdatedText();
         if (stations.length == 0) {
             Station[] previousResults = StationPersistence.getInstance(mHandler).getPreviousStations();
             if (previousResults != null) {
-                Log.i("pbsm", "Using previous station list");
                 Toast.makeText(mHandler, "Refresh failed; showing previous stations", Toast.LENGTH_LONG).show();
+                setStatusText("Showing previous station data (" + lastUpdated + ")");
                 stations = previousResults;
+            } else {
+                setStatusText("Unable to load station data");
             }
+        } else {
+            setStatusText("Station data loaded at " + lastUpdated);
         }
 
         mHandler.loadStationData(stations);
+    }
+
+    private String getLastUpdatedText() {
+        Date lastUpdate = StationPersistence.getInstance(mHandler).getLastUpdateTime();
+        return new SimpleDateFormat("h:mm aa").format(lastUpdate);
+    }
+
+    private void setStatusText(String msg) {
+        TextView statusTextView = (TextView) mHandler.findViewById(R.id.statusTextView);
+        statusTextView.setText(msg);
     }
 
     public interface StationDataLoader{
