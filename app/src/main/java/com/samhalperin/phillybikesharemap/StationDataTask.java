@@ -1,16 +1,15 @@
 package com.samhalperin.phillybikesharemap;
 
-import android.app.Activity;
-import android.net.http.AndroidHttpClient;
 import android.os.AsyncTask;
 import android.util.Log;
 
 import com.google.android.gms.maps.model.LatLng;
 
-import org.apache.http.client.ClientProtocolException;
-import org.apache.http.client.methods.HttpGet;
-
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
 
 /**
  * Created by sqh on 5/8/15.
@@ -36,22 +35,34 @@ public class StationDataTask extends AsyncTask<String, Void, Station[]> {
 //            }
             return debuggingStations();
         } else {
-            AndroidHttpClient client = AndroidHttpClient.newInstance("");
-            HttpGet request = new HttpGet(params[0]);
-            StationJsonResponseHandler responseHandler = new StationJsonResponseHandler();
             try {
-                return client.execute(request, responseHandler);
-            } catch (ClientProtocolException e) {
-                e.printStackTrace();
+                String jsonResponse = doGetRequest(params[0]);
+                Station[] stations = StationJsonResponseParser.jsonToStations(jsonResponse);
+                return stations;
             } catch (IOException e) {
-                e.printStackTrace();
-            } finally {
-                if (client != null) {
-                    client.close();
-                }
+                Log.w("pbsm", "Problem fetching station data", e);
             }
             Log.e("pbsm", "Uh oh, fell through to nodata.");
             return new Station[0];
+        }
+    }
+
+    private String doGetRequest(String urlStr) throws IOException {
+        HttpURLConnection urlConnection = null;
+        try {
+            URL url = new URL(urlStr);
+            urlConnection = (HttpURLConnection) url.openConnection();
+            BufferedReader reader = new BufferedReader(new InputStreamReader(urlConnection.getInputStream()));
+            StringBuffer responseData = new StringBuffer();
+            String line = "";
+            while ((line = reader.readLine()) != null) {
+                responseData.append(line);
+            }
+            return responseData.toString();
+        } finally {
+            if (urlConnection != null) {
+                urlConnection.disconnect();
+            }
         }
     }
 

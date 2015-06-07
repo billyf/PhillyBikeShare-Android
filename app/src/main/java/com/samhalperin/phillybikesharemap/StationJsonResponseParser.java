@@ -20,7 +20,7 @@ import java.util.List;
 /**
  * Created by sqh on 5/8/15.
  */
-public class StationJsonResponseHandler implements ResponseHandler<Station[]> {
+public class StationJsonResponseParser {
     private static final String FEATURES_TAG = "features";
     private static final String GEOMETRY_TAG = "geometry";
     private static final String COORDINATES_TAG = "coordinates";
@@ -32,13 +32,8 @@ public class StationJsonResponseHandler implements ResponseHandler<Station[]> {
     private static final String DOCKS_AVAIALABLE_TAG = "docksAvailable";
     private static final String KIOSK_PUBLIC_STATUS_TAG ="kioskPublicStatus";
 
-    @Override
-    public Station[] handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
-
+    public static Station[] jsonToStations(String JSONResponse) {
         List<Station> result = new ArrayList<Station>();
-        String JSONResponse = new BasicResponseHandler()
-                .handleResponse(response);
-
         try {
             JSONObject responseObject = (JSONObject) new JSONTokener(JSONResponse).nextValue();
             JSONArray stations = responseObject.getJSONArray(FEATURES_TAG);
@@ -61,7 +56,7 @@ public class StationJsonResponseHandler implements ResponseHandler<Station[]> {
                             docks,
                             status
                     ));
-                } catch (JSONException|ClassCastException e) {
+                } catch (JSONException |ClassCastException e) {
                     e.printStackTrace();
                 }
             }
